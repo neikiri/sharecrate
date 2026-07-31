@@ -1,0 +1,81 @@
+# ---------------------------------------------------------------------
+# ShareCrate - Apache configuration
+#
+# Drop the whole build output into your document root. If the site lives in
+# a subdirectory, adjust RewriteBase below and set APP_BASE_PATH in .env.
+# ---------------------------------------------------------------------
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # --- Force HTTPS (uncomment once your certificate works) -----------
+    # RewriteCond %{HTTPS} !=on
+    # RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # --- Block dotfiles (except ACME challenges) -----------------------
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+    # --- Everything virtual goes to the front controller ---------------
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# ---------------------------------------------------------------------
+# Never expose configuration, SQL dumps or documentation
+# ---------------------------------------------------------------------
+<FilesMatch "(^\.env|^\.env\..*|\.sql|\.log|\.md|composer\.(json|lock)|package(-lock)?\.json)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ---------------------------------------------------------------------
+# Caching: hashed asset names may be cached forever
+# ---------------------------------------------------------------------
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|woff2|svg|png|jpg|webp|avif|ico)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # PHP responses set their own Cache-Control (downloads and thumbnails
+    # need different values), so nothing is forced here.
+
+    Header always set X-Content-Type-Options "nosniff"
+    Header unset X-Powered-By
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType image/svg+xml .svg
+    AddType font/woff2 .woff2
+    AddType text/javascript .js
+    AddType application/json .json
+</IfModule>
+
+# ---------------------------------------------------------------------
+# Reasonable PHP defaults. Remove this block if your host forbids it
+# (php_value only works with mod_php - use .user.ini for FPM).
+# ---------------------------------------------------------------------
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_value upload_max_filesize 512M
+    php_value post_max_size 512M
+    php_value max_execution_time 600
+    php_value max_input_time 600
+    php_flag session.cookie_httponly On
+    php_flag expose_php Off
+</IfModule>
+

@@ -1,0 +1,83 @@
+name: Publish to npm and GitHub Packages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      ############################################################
+      # Setup Node for npm
+      ############################################################
+
+      - name: Setup Node for npm
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test --if-present
+
+      - name: Build package
+        run: npm run build --if-present
+
+
+      ############################################################
+      # Publish to npm using Trusted Publisher
+      ############################################################
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+
+
+      ############################################################
+      # Publish to GitHub Packages
+      ############################################################
+
+      - name: Setup Node for GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+
+      - name: Prepare package for GitHub Packages
+        run: |
+          node <<'EOF'
+          const fs = require("fs");
+
+          const pkg = JSON.parse(
+            fs.readFileSync("package.json", "utf8")
+          );
+
+          pkg.name = "@neikiri/sharecrate";
+
+          pkg.publishConfig = {
+            registry: "https://npm.pkg.github.com"
+          };
+
+          fs.writeFileSync(
+            "package.json",
+            JSON.stringify(pkg, null, 2)
+          );
+          EOF
+
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

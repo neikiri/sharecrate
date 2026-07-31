@@ -1,0 +1,27 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vite/
+/tmp/
+temp/
+*.tmp
+*.bak
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+
+# Local runtime data if the app is ever run outside dist/
+src/server/storage/uploads/*
+src/server/storage/cache/*
+src/server/storage/logs/*
+!src/server/storage/uploads/.gitkeep
+!src/server/storage/cache/.gitkeep
+!src/server/storage/logs/.gitkeep
