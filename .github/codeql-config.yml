@@ -1,0 +1,11 @@
+name: "CodeQL config"
+
+paths-ignore:
+  - node_modules
+  - dist
+  - build
+  - temp
+  - assets
+  - database
+  - src/frontend/static
+  - "**/*.min.js"
